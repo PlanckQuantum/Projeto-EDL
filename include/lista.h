@@ -1,25 +1,19 @@
 #ifndef LISTA_H
 #define LISTA_H
+#include "base.h"
 
-#include "estudante.h"
-
-typedef struct no {
-    Estudante estudante;
-    struct no *prox;
+typedef struct No {
+    const Estudante *estudante;
+    struct No *prox;
 } No;
-
 typedef struct {
     No *inicio;
     No *fim;
-    int quantidade;
+    size_t quantidade;
 } Lista;
 
-Lista *criar_lista(void);
-
-int inserir_lista(Lista *lista, Estudante estudante);
-
-Estudante *buscar_lista(Lista *lista, const char *matricula);
-
-void liberar_lista(Lista *lista);
-
+Lista *lista_criar(void);
+int lista_inserir(Lista *lista, const Estudante *estudante);
+const Estudante *lista_buscar(const Lista *lista, uint32_t matricula);
+void lista_liberar(Lista *lista);
 #endif

@@ -1,78 +1,28 @@
-#include <stdlib.h>
-#include <string.h>
-
 #include "lista.h"
+#include <stdlib.h>
 
-Lista *criar_lista(void) {
-    Lista *lista = malloc(sizeof(Lista));
-
-    if (lista == NULL) {
-        return NULL;
-    }
-
-    lista->inicio = NULL;
-    lista->fim = NULL;
-    lista->quantidade = 0;
-
-    return lista;
-}
-
-int inserir_lista(Lista *lista, Estudante estudante) {
-    if (lista == NULL) {
-        return 0;
-    }
-
-    No *novo = malloc(sizeof(No));
-
-    if (novo == NULL) {
-        return 0;
-    }
-
+Lista *lista_criar(void) { return calloc(1, sizeof(Lista)); }
+int lista_inserir(Lista *lista, const Estudante *estudante) {
+    if (!lista || !estudante) return 0;
+    No *novo = malloc(sizeof *novo);
+    if (!novo) return 0;
     novo->estudante = estudante;
     novo->prox = NULL;
-
-    if (lista->inicio == NULL) {
-        lista->inicio = novo;
-    } else {
-        lista->fim->prox = novo;
-    }
-
+    if (lista->fim) lista->fim->prox = novo;
+    else lista->inicio = novo;
     lista->fim = novo;
     lista->quantidade++;
-
     return 1;
 }
-a
-Estudante *buscar_lista(Lista *lista, const char *matricula) {
-    if (lista == NULL || matricula == NULL) {
-        return NULL;
-    }
-
-    No *atual = lista->inicio;
-
-    while (atual != NULL) {
-        if (strcmp(atual->estudante.matricula, matricula) == 0) {
-            return &atual->estudante;
-        }
-
-        atual = atual->prox;
-    }
-
+const Estudante *lista_buscar(const Lista *lista, uint32_t matricula) {
+    if (!lista) return NULL;
+    for (const No *no = lista->inicio; no; no = no->prox)
+        if (no->estudante->matricula == matricula) return no->estudante;
     return NULL;
 }
-
-void liberar_lista(Lista *lista) {
-    if (lista == NULL) {
-        return;
-    }
-
-    No *atual = lista->inicio;
-
-    while (atual != NULL) {
-        No *proximo = atual->prox;
-        free(atual);
-        atual = proximo;
-    }
-
+void lista_liberar(Lista *lista) {
+    if (!lista) return;
+    No *no = lista->inicio;
+    while (no) { No *prox = no->prox; free(no); no = prox; }
     free(lista);
 }
