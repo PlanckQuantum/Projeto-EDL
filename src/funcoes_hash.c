@@ -1,30 +1,45 @@
 #include "funcoes_hash.h"
 
-size_t calcular_hash(uint32_t matricula, size_t capacidade, TipoHash tipo) {
-    if (!capacidade) return 0;
-    if (tipo == HASH_DIVISAO) return (size_t)matricula % capacidade;
-    uint32_t hash = 2166136261u;
-    uint32_t divisor = 10000000u;
-    for (int i = 0; i < 8; ++i) {
-        unsigned char c = (unsigned char)('0' + (matricula / divisor) % 10u);
-        hash ^= (uint32_t)c;
-        hash *= 16777619u;
-        divisor /= 10u;
+int calcular_hash(int matricula, int capacidade, int tipo) {
+    int resultado;
+    int divisor;
+    int digito;
+    int i;
+
+    if (capacidade <= 0) {
+        return 0;
     }
-    return (size_t)hash % capacidade;
+
+    if (tipo == HASH_DIVISAO) {
+        return matricula % capacidade;
+    }
+
+    resultado = 0;
+    divisor = 10000000;
+    for (i = 0; i < 8; i++) {
+        digito = (matricula / divisor) % 10;
+        resultado = (resultado * 31 + digito) % capacidade;
+        divisor = divisor / 10;
+    }
+    return resultado;
 }
-const char *nome_funcao_hash(TipoHash tipo) {
-    return tipo == HASH_DIVISAO ? "divisao" : "fnv1a";
-}
-static int eh_primo(size_t n) {
-    if (n < 2) return 0;
-    if (n % 2 == 0) return n == 2;
-    for (size_t i = 3; i <= n / i; i += 2) if (n % i == 0) return 0;
+
+int eh_primo(int numero) {
+    int i;
+    if (numero < 2) {
+        return 0;
+    }
+    for (i = 2; i * i <= numero; i++) {
+        if (numero % i == 0) {
+            return 0;
+        }
+    }
     return 1;
 }
-size_t proximo_primo(size_t n) {
-    if (n <= 2) return 2;
-    if (n % 2 == 0) ++n;
-    while (!eh_primo(n)) n += 2;
-    return n;
+
+int proximo_primo(int numero) {
+    while (eh_primo(numero) == 0) {
+        numero++;
+    }
+    return numero;
 }

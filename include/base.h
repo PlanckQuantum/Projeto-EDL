@@ -1,21 +1,20 @@
 #ifndef BASE_H
 #define BASE_H
-#include <stddef.h>
-#include <stdint.h>
 
 typedef struct {
-    uint32_t matricula;
-    uint32_t texto_offset; 
+    int matricula;
+    int posicao_texto;
 } Estudante;
 
 typedef struct {
     Estudante *estudantes;
-    size_t quantidade;
+    int quantidade;
     char *texto;
-    size_t texto_usado;
+    int texto_usado;
 } Base;
 
-int base_carregar(Base *base, const char *caminho, size_t limite);
+int base_carregar(Base *base, char *caminho, int limite);
+char *base_linha(Base *base, Estudante *estudante);
 void base_liberar(Base *base);
-const char *base_linha(const Base *base, const Estudante *estudante);
+
 #endif
