@@ -1,59 +1,103 @@
-#include "hash_aberta.h"
 #include <stdlib.h>
+#include "hash_aberta.h"
 
-static int marcar_inicial(unsigned char *bits, size_t indice) {
-    unsigned char mascara = (unsigned char)(1u << (indice % 8));
-    int repetido = !!(bits[indice / 8] & mascara);
-    bits[indice / 8] |= mascara;
-    return repetido;
+HashAberta *aberta_criar(int capacidade, int tipo) {
+    HashAberta *hash;
+    if (capacidade <= 0) {
+        return NULL;
+    }
+
+    hash = malloc(sizeof(HashAberta));
+    if (hash == NULL) {
+        return NULL;
+    }
+    hash->capacidade = capacidade;
+    hash->quantidade = 0;
+    hash->colisoes = 0;
+    hash->tipo = tipo;
+    
+    hash->tabela = calloc(capacidade, sizeof(Estudante *));
+    hash->inicio_usado = calloc(capacidade, sizeof(char));
+    if (hash->tabela == NULL || hash->inicio_usado == NULL) {
+        aberta_liberar(hash);
+        return NULL;
+    }
+    return hash;
 }
-HashAberta *aberta_criar(const Base *base, size_t capacidade, TipoHash funcao) {
-    if (!base || !capacidade || capacidade >= UINT32_MAX) return NULL;
-    HashAberta *h = calloc(1, sizeof *h);
-    if (!h) return NULL;
-    h->base = base;
-    h->capacidade = capacidade;
-    h->funcao = funcao;
-    h->posicoes = calloc(capacidade, sizeof(uint32_t));
-    h->indices_iniciais = calloc((capacidade + 7)/8, 1);
-    if (!h->posicoes || !h->indices_iniciais) { aberta_liberar(h); return NULL; }
-    return h;
-}
-int aberta_inserir(HashAberta *h, size_t indice_estudante) {
-    if (!h || indice_estudante >= h->base->quantidade || h->quantidade >= h->capacidade) return 0;
-    uint32_t chave = h->base->estudantes[indice_estudante].matricula;
-    size_t inicial = calcular_hash(chave, h->capacidade, h->funcao);
-    /* Colisao = novo indice hash inicial ja produzido por outra chave. */
-    h->colisoes += (uint64_t)marcar_inicial(h->indices_iniciais, inicial);
-    for (size_t i = 0; i < h->capacidade; ++i) {
-        size_t pos = inicial + i;
-        if (pos >= h->capacidade) pos -= h->capacidade;
-        uint32_t indice_mais_um = h->posicoes[pos];
-        if (indice_mais_um == 0) {
-            h->posicoes[pos] = (uint32_t)(indice_estudante + 1);
-            h->quantidade++;
+
+int aberta_inserir(HashAberta *hash, Estudante *estudante) {
+    int inicial;
+    int posicao;
+    int tentativas;
+
+    if (hash == NULL || estudante == NULL) {
+        return 0;
+    }
+    if (hash->quantidade == hash->capacidade) {
+        return 0;
+    }
+
+    inicial = calcular_hash(estudante->matricula,
+                            hash->capacidade, hash->tipo);
+    posicao = inicial;
+    tentativas = 0;
+
+    while (tentativas < hash->capacidade) {
+        if (hash->tabela[posicao] == NULL) {
+            hash->tabela[posicao] = estudante;
+            hash->quantidade++;
+
+            if (hash->inicio_usado[inicial] == 1) {
+                hash->colisoes++;
+            }
+            hash->inicio_usado[inicial] = 1;
             return 1;
         }
-        if (h->base->estudantes[indice_mais_um - 1].matricula == chave) return 0;
+        if (hash->tabela[posicao]->matricula == estudante->matricula) {
+            return 0;
+        }
+
+        posicao++;
+        if (posicao == hash->capacidade) {
+            posicao = 0;
+        }
+        tentativas++;
     }
     return 0;
 }
-const Estudante *aberta_buscar(const HashAberta *h, uint32_t matricula) {
-    if (!h) return NULL;
-    size_t inicial = calcular_hash(matricula, h->capacidade, h->funcao);
-    for (size_t i = 0; i < h->capacidade; ++i) {
-        size_t pos = inicial + i;
-        if (pos >= h->capacidade) pos -= h->capacidade;
-        uint32_t indice_mais_um = h->posicoes[pos];
-        if (!indice_mais_um) return NULL;
-        const Estudante *e = &h->base->estudantes[indice_mais_um - 1];
-        if (e->matricula == matricula) return e;
+
+Estudante *aberta_buscar(HashAberta *hash, int matricula) {
+    int posicao;
+    int tentativas;
+
+    if (hash == NULL) {
+        return NULL;
+    }
+    posicao = calcular_hash(matricula, hash->capacidade, hash->tipo);
+    tentativas = 0;
+
+    while (tentativas < hash->capacidade) {
+        if (hash->tabela[posicao] == NULL) {
+            return NULL;
+        }
+        if (hash->tabela[posicao]->matricula == matricula) {
+            return hash->tabela[posicao];
+        }
+
+        posicao++;
+        if (posicao == hash->capacidade) {
+            posicao = 0;
+        }
+        tentativas++;
     }
     return NULL;
 }
-void aberta_liberar(HashAberta *h) {
-    if (!h) return;
-    free(h->posicoes);
-    free(h->indices_iniciais);
-    free(h);
+
+void aberta_liberar(HashAberta *hash) {
+    if (hash == NULL) {
+        return;
+    }
+    free(hash->tabela);
+    free(hash->inicio_usado);
+    free(hash);
 }
