@@ -1,19 +1,21 @@
 #ifndef HASH_ABERTA_H
 #define HASH_ABERTA_H
+
 #include "base.h"
 #include "funcoes_hash.h"
 
 typedef struct {
-    const Base *base;
-    uint32_t *posicoes; 
-    unsigned char *indices_iniciais; 
-    size_t capacidade;
-    size_t quantidade;
-    uint64_t colisoes;
-    TipoHash funcao;
+    Estudante **tabela;
+    char *inicio_usado;
+    int capacidade;
+    int quantidade;
+    int colisoes;
+    int tipo;
 } HashAberta;
-HashAberta *aberta_criar(const Base *base, size_t capacidade, TipoHash funcao);
-int aberta_inserir(HashAberta *hash, size_t indice_estudante);
-const Estudante *aberta_buscar(const HashAberta *hash, uint32_t matricula);
+
+HashAberta *aberta_criar(int capacidade, int tipo);
+int aberta_inserir(HashAberta *hash, Estudante *estudante);
+Estudante *aberta_buscar(HashAberta *hash, int matricula);
 void aberta_liberar(HashAberta *hash);
+
 #endif
